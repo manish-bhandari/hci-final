@@ -25,7 +25,11 @@ function Waveform({
 	isPlaying,
 	setIsPlaying,
 	audioFileUrl,
-	imageUrl,
+	setIsWaveformReady,
+	isWaveformReady,
+	mode,
+	currentTime,
+	activeMarkerType,
 }) {
 	const plugins = useMemo(() => {
 		return [
@@ -38,26 +42,21 @@ function Waveform({
 
 	const containerRef = useRef();
 
-	const [wavesurferReady, setWavesurferReady] = useState(false);
-
 	const handleWSMount = useCallback((waveSurfer) => {
 		wavesurferRef.current = waveSurfer;
 
 		if (wavesurferRef.current) {
 			wavesurferRef.current.load(audioFileUrl);
-
 			wavesurferRef.current.on("ready", () => {
 				console.log("WaveSurfer is ready");
-				setWavesurferReady(true);
-
+				setIsWaveformReady(true);
+				wavesurferRef.current.play();
 				// Calculate the zoom value based on the screen width and the duration of the audio file
 				const screenWidth = window.innerWidth;
 				const duration = wavesurferRef.current.getDuration();
 				const zoomValue = screenWidth / duration;
 
 				wavesurferRef.current.zoom(zoomValue);
-
-				// wavesurferRef.current.seekTo(62 / wavesurferRef.current.getDuration());
 			});
 
 			wavesurferRef.current.on("audioprocess", () => {
@@ -80,7 +79,10 @@ function Waveform({
 		wavesurferRef.current.skipBackward(10);
 	}, []);
 
-	useEffect(() => {}, [timecodes]);
+	useEffect(() => {
+		if (activeMarkerType == "range") {
+		}
+	}, [activeMarkerType]);
 
 	return (
 		<WaveformWrapper>
@@ -94,42 +96,47 @@ function Waveform({
 				<WaveSurfer onMount={handleWSMount} plugins={plugins}>
 					<WaveForm
 						id="waveform"
-						cursorColor="transparent"
+						cursorColor="#13BB9D "
 						waveColor="#999"
-						progressColor="#555"
+						progressColor="#4AEAEA"
 						barWidth={3}
 						barGap={1}
 						height={60}
 					/>
-					{wavesurferReady &&
+					{isWaveformReady &&
+						mode === "play" &&
 						timecodes.map((timecode, index) => {
 							const duration = wavesurferRef.current.getDuration();
 							const containerWidth = containerRef.current.offsetWidth;
-							console.log("containerWidth", containerWidth);
-							const currTimePercentage = timecode.start / duration;
-							const position = containerWidth * currTimePercentage;
+							const startPos = containerWidth * (timecode.start / duration);
+							const stopPos = containerWidth * (timecode.stop / duration);
+
 							return (
 								<Marker
 									wavesurfer={wavesurferRef.current}
-									time={position}
+									startPos={startPos}
+									stopPos={stopPos}
 									key={index}
+									color={timecode.color}
 								/>
 							);
 						})}
 				</WaveSurfer>
 			</div>
-
-			<AudioControls>
-				<TimeSkipButton onClick={skipBackward}>
-					<FontAwesomeIcon icon={faUndoAlt} />
-				</TimeSkipButton>
-				<PlayPauseButton onClick={playPause}>
-					<FontAwesomeIcon icon={isPlaying ? faPause : faPlay} />
-				</PlayPauseButton>
-				<TimeSkipButton onClick={skipForward}>
-					<FontAwesomeIcon icon={faRedoAlt} />
-				</TimeSkipButton>
-			</AudioControls>
+			{isWaveformReady && <CurrentTime>{currentTime}</CurrentTime>}
+			{isWaveformReady && (
+				<AudioControls>
+					<TimeSkipButton onClick={skipBackward}>
+						<FontAwesomeIcon icon={faUndoAlt} />
+					</TimeSkipButton>
+					<PlayPauseButton onClick={playPause}>
+						<FontAwesomeIcon icon={isPlaying ? faPause : faPlay} />
+					</PlayPauseButton>
+					<TimeSkipButton onClick={skipForward}>
+						<FontAwesomeIcon icon={faRedoAlt} />
+					</TimeSkipButton>
+				</AudioControls>
+			)}
 		</WaveformWrapper>
 	);
 }
@@ -146,6 +153,14 @@ const PlayPauseButton = styled.button`
 	text-align: center;
 	color: rgb(21, 37, 49);
 	line-height: 50px; // Added line-height property
+	cursor: pointer;
+`;
+
+const CurrentTime = styled.div`
+	color: white;
+	text-align: center;
+	margin: 20px;
+	color: #71ffd4;
 `;
 
 const WaveformWrapper = styled.div`
@@ -158,6 +173,7 @@ const TimeSkipButton = styled.button`
 	border-radius: 50%;
 	font-size: 30px;
 	color: #e9e9e9;
+	cursor: pointer;
 `;
 
 const AudioControls = styled.div`
@@ -165,5 +181,5 @@ const AudioControls = styled.div`
 	flex-direction: row;
 	justify-content: center;
 	gap: 10px;
-	margin: 50px 0;
+	margin: 30px 0;
 `;

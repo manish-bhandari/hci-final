@@ -1,49 +1,49 @@
 import React from "react";
 import styled from "styled-components";
+import { ReactComponent as RangeStartSVG } from "../assets/range-start.svg";
+import { ReactComponent as RangeStopSVG } from "../assets/range-stop.svg";
 
-const Marker = ({ type, color, time, wavesurfer }) => {
-	if (type === "range-start") {
-		return <RangeStart position={time}></RangeStart>;
-	} else if (type === "range-end") {
-		return <RangeEnd position={time}></RangeEnd>;
+const Marker = ({ type, color, startPos, stopPos, wavesurfer }) => {
+	console.log("startPos", startPos);
+	console.log("stopPos", stopPos);
+	if (stopPos) {
+		return (
+			<Range>
+				<RangeLabel position={startPos} color={color}>
+					<RangeStartSVG />
+				</RangeLabel>
+				<RangeLabel position={stopPos} color={color}>
+					<RangeStopSVG />
+				</RangeLabel>
+			</Range>
+		);
 	} else {
-		return <Circle position={time}></Circle>;
+		return <Circle position={startPos} color={color}></Circle>;
 	}
 };
 
 const Circle = styled.div`
 	position: absolute;
-	width: 10px;
-	height: 10px;
+	width: 7px;
+	height: 7px;
 	border-radius: 50%;
 	transform: translate(-50%);
-	background-color: red;
+	background-color: ${(props) => props.color};
 	z-index: 2;
 	left: ${(props) => props.position}px;
 `;
 
-const RangeStart = styled.div`
+const Range = styled.div`
 	position: absolute;
-	width: 10px;
-	height: 10px;
-	transform: translate(-50%, -50%);
-	transform: translateY(5px);
-	background-color: red;
-	z-index: 2;
-	left: ${(props) => props.position}px;
-	color: ${(props) => props.color};
 `;
 
-const RangeEnd = styled.div`
+const RangeLabel = styled.div`
 	position: absolute;
-	width: 10px;
-	height: 10px;
-	transform: translate(-50%, -50%);
-	transform: translateY(5px);
-	background-color: red;
-	z-index: 2;
+	transform: translate(-50%, -30%);
 	left: ${(props) => props.position}px;
-	color: ${(props) => props.color};
+	svg {
+		fill: ${(props) => props.color};
+	}
 `;
 
 export default Marker;

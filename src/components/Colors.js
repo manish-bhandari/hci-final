@@ -6,7 +6,7 @@ const Colors = ({ setActiveColor, setActiveIndex, activeIndex }) => {
 
 	const handleClick = (index) => {
 		setActiveIndex(index);
-		setActiveColor(colors[activeIndex]);
+		setActiveColor(colors[index]);
 	};
 
 	return (

@@ -12,6 +12,15 @@ import {
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../components/firebase";
 import Colors from "../components/Colors";
+import { PulseLoader } from "react-spinners";
+
+function formatTime(seconds) {
+	const minutes = Math.floor((seconds % 3600) / 60);
+	const secondsLeft = Math.floor(seconds % 60);
+	const minutesString = minutes.toString().padStart(2, "0");
+	const secondsString = secondsLeft.toString().padStart(2, "0");
+	return `${minutesString}:${secondsString}`;
+}
 
 const MixPage = ({ title, artist }) => {
 	const { id } = useParams(); // get the "id" parameter from the URL
@@ -32,6 +41,7 @@ const MixPage = ({ title, artist }) => {
 	const [label, setLabel] = useState("");
 	const [startTimecode, setStartTimecode] = useState("");
 	const [stopTimecode, setStopTimecode] = useState("");
+	const [currentTime, setCurrentTime] = useState("00:00");
 
 	useEffect(() => {
 		const fetchMix = async () => {
@@ -58,35 +68,42 @@ const MixPage = ({ title, artist }) => {
 	}, []);
 
 	useEffect(() => {
+		console.log(currentTime);
+	}, [currentTime]);
+
+	useEffect(() => {
 		console.log(mixData);
 	}, [mixData]);
-
-	// const timecodes = [
-	// 	{
-	// 		label: "Beginning",
-	// 		start: 0,
-	// 		stop: null,
-	// 	},
-	// 	{
-	// 		label: "Whatamma",
-	// 		start: 0,
-	// 		stop: 12,
-	// 	},
-	// 	{
-	// 		label: "HipHop",
-	// 		start: 62,
-	// 		stop: 80,
-	// 	},
-	// ];
 
 	const wavesurferRef = useRef();
 
 	const [currRegion, setCurrRegion] = useState(null);
-	const [isPlaying, setIsPlaying] = useState(false);
+	const [isPlaying, setIsPlaying] = useState(true);
 
 	const [isWaveformReady, setIsWaveformReady] = useState(false);
+	const [selectedLabel, setSelectedLabel] = useState(null);
 
-	const onTimecodeClick = (timecode) => {
+	function hexToRGBA(hex) {
+		const validHex = hex.replace("#", "");
+		const rgb = {
+			r: parseInt(validHex.slice(0, 2), 16),
+			g: parseInt(validHex.slice(2, 4), 16),
+			b: parseInt(validHex.slice(4, 6), 16),
+		};
+
+		return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`;
+	}
+
+	const onTimecodeClick = (index, timecode) => {
+		if (index === selectedLabel && timecode.stop != null) {
+			setSelectedLabel(null);
+			currRegion.remove();
+			setCurrRegion(null);
+			return;
+		} else {
+			setSelectedLabel(index);
+		}
+
 		wavesurferRef.current.seekTo(
 			timecode.start / wavesurferRef.current.getDuration()
 		);
@@ -103,7 +120,7 @@ const MixPage = ({ title, artist }) => {
 			const newRegion = wavesurferRef.current.addRegion({
 				start: timecode.start,
 				end: timecode.stop,
-				color: "rgba(255, 0, 0, 0.3)",
+				color: hexToRGBA(timecode.color),
 				drag: false,
 				resize: false,
 				loop: true,
@@ -152,11 +169,76 @@ const MixPage = ({ title, artist }) => {
 		setMode("play");
 	}
 
-	if (mixData === null) return <div>Loading...</div>;
+	useEffect(() => {
+		console.log("waveform ready", isWaveformReady);
+		if (!isWaveformReady) return;
+		const intervalId = setInterval(() => {
+			setCurrentTime(formatTime(wavesurferRef.current.getCurrentTime()));
+		}, 1);
+		return () => clearInterval(intervalId);
+	}, [isWaveformReady]);
+
+	useEffect(() => {
+		if (activeMarkerType === "point") setStartTimecode(currentTime);
+	}, [currentTime]);
+
+	useEffect(() => {
+		if (!isWaveformReady) return;
+		if (activeMarkerType === "point") {
+			if (currRegion != null) {
+				currRegion.remove();
+				setCurrRegion(null);
+			}
+		}
+
+		const region = wavesurferRef.current.addRegion({
+			// id: "edit-region",
+			start: wavesurferRef.current.getCurrentTime(),
+			end: wavesurferRef.current.getCurrentTime() + 10,
+			color: hexToRGBA(activeColor),
+			drag: true,
+			resize: true,
+			handleStyle: {
+				height: 10,
+				fillColor: "red",
+				strokeColor: "red",
+			},
+		});
+		setCurrRegion(region);
+		setStartTimecode(formatTime(region.start.toFixed(2)));
+		setStopTimecode(formatTime(region.end.toFixed(2)));
+		region.on("update", () => {
+			setStartTimecode(formatTime(region.start.toFixed(2)));
+			setStopTimecode(formatTime(region.end.toFixed(2)));
+			if (region.start > wavesurferRef.current.getCurrentTime())
+				wavesurferRef.current.setCurrentTime(region.start);
+		});
+
+		// wavesurferRef.current.on("play", () => {
+		// 	const currentTime = wavesurferRef.current.getCurrentTime();
+		// 	if (currentTime < region.start || currentTime > region.end) {
+		// 		wavesurferRef.current.pause();
+		// 		setIsPlaying(false);
+		// 	}
+		// });
+	}, [activeMarkerType]);
+
+	if (mixData === null)
+		return (
+			<Loader>
+				<PulseLoader color="#5D7C86" loading={true} size={15} />
+			</Loader>
+		);
 
 	return (
-		<Container>
-			<Header>
+		<Container imageUrl={imageUrl}>
+			{!isWaveformReady && (
+				<Loader>
+					<PulseLoader color="#5D7C86" loading={true} size={15} />
+				</Loader>
+			)}
+
+			<Header isWaveformReady={isWaveformReady}>
 				<Title>{mixData.name}</Title>
 				<ArtistSubtitle>{mixData.artist}</ArtistSubtitle>
 			</Header>
@@ -165,34 +247,44 @@ const MixPage = ({ title, artist }) => {
 				wavesurferRef={wavesurferRef}
 				isPlaying={isPlaying}
 				setIsPlaying={setIsPlaying}
+				isWaveformReady={isWaveformReady}
 				setIsWaveformReady={setIsWaveformReady}
 				audioFileUrl={audioFileUrl}
-				imageUrl={imageUrl}
+				mode={mode}
+				currentTime={currentTime}
+				setCurrentTime={setCurrentTime}
+				activeMarkerType={activeMarkerType}
 			/>
-			{mode === "play" ? (
-				<>
-					<Timecodes
-						timecodes={mixData.markers ? mixData.markers : []}
-						onTimecodeClick={onTimecodeClick}
+			<Content ready={isWaveformReady}>
+				{mode === "play" && (
+					<>
+						<Timecodes
+							timecodes={mixData.markers ? mixData.markers : []}
+							onTimecodeClick={onTimecodeClick}
+							selectedLabel={selectedLabel}
+						/>
+						<AddButton onClick={() => setMode("edit")}>+</AddButton>
+					</>
+				)}
+
+				{mode === "edit" && (
+					<EditContent
+						setActiveMarkerType={setActiveMarkerType}
+						activeMarkerType={activeMarkerType}
+						setActiveColor={setActiveColor}
+						activeIndex={activeIndex}
+						setActiveIndex={setActiveIndex}
+						label={label}
+						setLabel={setLabel}
+						startTimecode={startTimecode}
+						setStartTimecode={setStartTimecode}
+						stopTimecode={stopTimecode}
+						setStopTimecode={setStopTimecode}
+						createMarkerHandler={createMarkerHandler}
+						setMode={setMode}
 					/>
-					<AddButton onClick={() => setMode("edit")}>+</AddButton>
-				</>
-			) : (
-				<EditContent
-					setActiveMarkerType={setActiveMarkerType}
-					activeMarkerType={activeMarkerType}
-					setActiveColor={setActiveColor}
-					activeIndex={activeIndex}
-					setActiveIndex={setActiveIndex}
-					label={label}
-					setLabel={setLabel}
-					startTimecode={startTimecode}
-					setStartTimecode={setStartTimecode}
-					stopTimecode={stopTimecode}
-					setStopTimecode={setStopTimecode}
-					createMarkerHandler={createMarkerHandler}
-				/>
-			)}
+				)}
+			</Content>
 		</Container>
 	);
 };
@@ -210,6 +302,7 @@ const EditContent = ({
 	stopTimecode,
 	setStopTimecode,
 	createMarkerHandler,
+	setMode,
 }) => {
 	return (
 		<EditContentContainer>
@@ -271,11 +364,18 @@ const EditContent = ({
 				<CreateButton onClick={() => createMarkerHandler()}>
 					Create
 				</CreateButton>
-				<CancelButton>Cancel</CancelButton>
+				<CancelButton onClick={() => setMode("play")}>Cancel</CancelButton>
 			</Buttons>
 		</EditContentContainer>
 	);
 };
+
+const Loader = styled.div`
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+`;
 
 const Inputs = styled.div`
 	display: flex;
@@ -387,6 +487,15 @@ const Header = styled.div`
 	display: flex;
 	flex-direction: column;
 	margin-top: 100px;
+	opacity: ${({ isWaveformReady }) => (isWaveformReady ? "1" : "0")};
+	transition: opacity 0.2s ease-in;
+	will-change: opacity;
+`;
+
+const Content = styled.div`
+	opacity: ${({ ready }) => (ready ? "1" : "0")};
+	transition: opacity 0.2s ease-in;
+	will-change: opacity;
 `;
 
 const Title = styled.div`
@@ -404,6 +513,22 @@ const ArtistSubtitle = styled.div`
 const Container = styled.div`
 	display: flex;
 	flex-direction: column;
+	position: relative;
+	height: 100%;
+	::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		opacity: 0.2;
+		background-image: ${({ imageUrl }) => `url(${imageUrl})`};
+		background-size: cover;
+		background-position: center;
+		background-repeat: no-repeat;
+		pointer-events: none;
+	}
 `;
 
 export default MixPage;

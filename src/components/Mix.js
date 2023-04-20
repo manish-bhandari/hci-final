@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 function Mix({ data }) {
+	console.log("data", data);
+	const markers = data.markers ? data.markers : [];
 	return (
-		<Link to={`/mix/${data.id}`}>
+		<Link to={`/mix/${data.id}`} style={{ textDecoration: "none" }}>
 			<MixContainer>
 				<ImageContainer>
 					<img src={data.image} alt="mix" />
@@ -15,8 +17,8 @@ function Mix({ data }) {
 						<Artist>{data.artist}</Artist>
 					</Header>
 					<Markers>
-						{["hiphop", "whatamma"].map((marker, index) => (
-							<Marker key={index}>{marker}</Marker>
+						{markers.map((marker, index) => (
+							<Marker key={index}>{marker.label}</Marker>
 						))}
 					</Markers>
 				</Content>
@@ -80,14 +82,15 @@ const ImageContainer = styled.div`
 	overflow: "hidden";
 	width: 100px;
 	height: 100px;
-	border-top-left-radius: 7;
-	border-bottom-left-radius: 7;
+	border-top-left-radius: 7px;
+	border-bottom-left-radius: 7px;
 
 	img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-		border-radius: 7px;
+		border-top-left-radius: 7px;
+		border-bottom-left-radius: 7px;
 	}
 `;
 

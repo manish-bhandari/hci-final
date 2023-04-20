@@ -14,6 +14,7 @@ import {
 	uploadBytes,
 	ref as storageRef,
 } from "firebase/storage";
+import { PulseLoader } from "react-spinners";
 
 Modal.setAppElement("#root");
 
@@ -53,6 +54,8 @@ const Mixes = () => {
 
 	const [modalIsOpen, setModalIsOpen] = useState(false);
 
+	const [isLoading, setIsLoading] = useState(true);
+
 	useEffect(() => {
 		if (!user) return;
 		const db = getDatabase(app);
@@ -66,6 +69,7 @@ const Mixes = () => {
 				});
 			});
 			setMixes(fetchedMixes);
+			setIsLoading(false);
 		});
 		return () => {
 			unsubscribe();
@@ -122,6 +126,7 @@ const Mixes = () => {
 			markers: [],
 			userId: user.uid,
 		};
+		console.log("new mix created", newMix);
 
 		const mixRef = ref(rtdb, `mixes/${user.uid}/${mixId}`);
 		await set(mixRef, newMix);
@@ -134,6 +139,14 @@ const Mixes = () => {
 	const handleProfileClick = () => {
 		navigate("/profile");
 	};
+
+	if (isLoading) {
+		return (
+			<Loader>
+				<PulseLoader color="#5D7C86" loading={true} size={15} />
+			</Loader>
+		);
+	}
 
 	return (
 		<Container>
@@ -187,7 +200,7 @@ const Mixes = () => {
 			<AddButton>
 				<input
 					type="file"
-					accept=".mp3"
+					accept=".mp3, .wav"
 					id="fileUploader"
 					onChange={fileChangedHandler}
 					style={{ display: "none" }}
@@ -276,4 +289,11 @@ const Title = styled.div`
 	font-size: 25px;
 	width: fit-content;
 	margin-bottom: 20px;
+`;
+
+const Loader = styled.div`
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 `;

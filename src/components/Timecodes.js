@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-const Timecodes = ({ timecodes, onTimecodeClick }) => {
+const Timecodes = ({ timecodes, onTimecodeClick, selectedLabel }) => {
 	function secondsToTimeFormat(seconds) {
 		if (seconds == null) return "-";
 		const minutes = Math.floor(seconds / 60);
@@ -16,18 +16,21 @@ const Timecodes = ({ timecodes, onTimecodeClick }) => {
 		<Table>
 			<Row>
 				<HeadElement></HeadElement>
-				<HeadElement>Label</HeadElement>
+				<HeadElement style={{ textAlign: "left" }}>Label</HeadElement>
 				<HeadElement>Start</HeadElement>
 				<HeadElement>Stop</HeadElement>
 			</Row>
 			<TBody>
 				{timecodes.map((timecode, index) => (
 					<Row
+						className={
+							timecode.stop != null && selectedLabel === index ? "active" : ""
+						}
 						key={index}
-						onClick={() => onTimecodeClick(timecode)} // Add onClick event here
+						onClick={() => onTimecodeClick(index, timecode)} // Add onClick event here
 					>
 						<Color color={timecode.color}></Color>
-						<p>{timecode.label}</p>
+						<p style={{ textAlign: "left" }}>{timecode.label}</p>
 						<p>{secondsToTimeFormat(timecode.start)}</p>
 						<p>{secondsToTimeFormat(timecode.stop)}</p>
 					</Row>
@@ -72,15 +75,19 @@ const Row = styled.div`
 	display: grid;
 	grid-template-columns: 10% 50% 20% 20%;
 	grid-template-rows: 1fr;
-	color: #fff;
+	color: #e9e9e9;
 	font-weight: 400;
 	padding: 5px 0;
 	align-items: center;
+
 	p {
 		margin: 0;
 	}
 	&:hover {
 		background-color: rgba(0, 0, 0, 0.2);
 		cursor: pointer;
+	}
+	&.active {
+		background-color: #153935;
 	}
 `;
