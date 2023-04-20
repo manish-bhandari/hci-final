@@ -19,7 +19,14 @@ import Marker from "./Marker";
 
 import RegionsPlugin from "wavesurfer.js/dist/plugin/wavesurfer.regions.min";
 
-function Waveform({ timecodes, wavesurferRef, isPlaying, setIsPlaying }) {
+function Waveform({
+	timecodes,
+	wavesurferRef,
+	isPlaying,
+	setIsPlaying,
+	audioFileUrl,
+	imageUrl,
+}) {
 	const plugins = useMemo(() => {
 		return [
 			{
@@ -37,7 +44,7 @@ function Waveform({ timecodes, wavesurferRef, isPlaying, setIsPlaying }) {
 		wavesurferRef.current = waveSurfer;
 
 		if (wavesurferRef.current) {
-			wavesurferRef.current.load("/assets/audio.mp3");
+			wavesurferRef.current.load(audioFileUrl);
 
 			wavesurferRef.current.on("ready", () => {
 				console.log("WaveSurfer is ready");
@@ -48,7 +55,7 @@ function Waveform({ timecodes, wavesurferRef, isPlaying, setIsPlaying }) {
 				const duration = wavesurferRef.current.getDuration();
 				const zoomValue = screenWidth / duration;
 
-				// wavesurferRef.current.zoom(zoomValue);
+				wavesurferRef.current.zoom(zoomValue);
 
 				// wavesurferRef.current.seekTo(62 / wavesurferRef.current.getDuration());
 			});

@@ -5,7 +5,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   box-sizing: border-box;
-  background: rgba(13,37,45,1) 50%;
+  background: rgb(41,41,41);
+  background: linear-gradient(180deg, rgba(41,41,41,1) 0%, rgba(13,37,45,1) 50%);
+
 }
 
 code {
@@ -14,8 +16,5 @@ code {
 }
 
 .App{
-  background-color: bisque;
   height: 100vh;
-  background: rgb(41,41,41);
-  background: linear-gradient(180deg, rgba(41,41,41,1) 0%, rgba(13,37,45,1) 50%);
 }

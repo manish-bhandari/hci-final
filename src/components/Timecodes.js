@@ -2,6 +2,16 @@ import React from "react";
 import styled from "styled-components";
 
 const Timecodes = ({ timecodes, onTimecodeClick }) => {
+	function secondsToTimeFormat(seconds) {
+		if (seconds == null) return "-";
+		const minutes = Math.floor(seconds / 60);
+		const remainingSeconds = Math.floor(seconds % 60);
+
+		const paddedMinutes = String(minutes).padStart(2, "0");
+		const paddedSeconds = String(remainingSeconds).padStart(2, "0");
+
+		return `${paddedMinutes}:${paddedSeconds}`;
+	}
 	return (
 		<Table>
 			<Row>
@@ -16,10 +26,10 @@ const Timecodes = ({ timecodes, onTimecodeClick }) => {
 						key={index}
 						onClick={() => onTimecodeClick(timecode)} // Add onClick event here
 					>
-						<p>{index + 1}</p>
+						<Color color={timecode.color}></Color>
 						<p>{timecode.label}</p>
-						<p>{timecode.start}</p>
-						<p>{timecode.stop}</p>
+						<p>{secondsToTimeFormat(timecode.start)}</p>
+						<p>{secondsToTimeFormat(timecode.stop)}</p>
 					</Row>
 				))}
 			</TBody>
@@ -32,6 +42,14 @@ export default Timecodes;
 const THead = styled.thead`
 	color: #a1a1a1;
 	font-weight: 300;
+`;
+
+const Color = styled.div`
+	background-color: ${(props) => props.color};
+	border-radius: 50%;
+	width: 10px;
+	height: 10px;
+	margin: 0 auto;
 `;
 
 const Table = styled.div`
@@ -57,7 +75,7 @@ const Row = styled.div`
 	color: #fff;
 	font-weight: 400;
 	padding: 5px 0;
-
+	align-items: center;
 	p {
 		margin: 0;
 	}
