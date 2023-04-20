@@ -1,7 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { getDatabase, ref, update } from "firebase/database";
+import { app } from "./firebase";
 
-const Timecodes = ({ timecodes, onTimecodeClick, selectedLabel }) => {
+const Timecodes = ({
+	timecodes,
+	onTimecodeClick,
+	selectedLabel,
+	userId,
+	mixId,
+}) => {
 	function secondsToTimeFormat(seconds) {
 		if (seconds == null) return "-";
 		const minutes = Math.floor(seconds / 60);
@@ -12,6 +22,19 @@ const Timecodes = ({ timecodes, onTimecodeClick, selectedLabel }) => {
 
 		return `${paddedMinutes}:${paddedSeconds}`;
 	}
+
+	const [markers, setMarkers] = useState([...timecodes]);
+
+	const deleteTimecode = async (index) => {
+		const updatedMarkers = markers.filter((_, i) => i !== index);
+		setMarkers(updatedMarkers);
+
+		// Update the markers array in Firebase
+		const db = getDatabase(app);
+		const mixRef = ref(db, `mixes/${userId}/${mixId}/markers`);
+		await update(mixRef, { [index]: null });
+	};
+
 	return (
 		<Table>
 			<Row>
@@ -21,7 +44,7 @@ const Timecodes = ({ timecodes, onTimecodeClick, selectedLabel }) => {
 				<HeadElement>Stop</HeadElement>
 			</Row>
 			<TBody>
-				{timecodes.map((timecode, index) => (
+				{markers.map((timecode, index) => (
 					<Row
 						className={
 							timecode.stop != null && selectedLabel === index ? "active" : ""
@@ -33,6 +56,14 @@ const Timecodes = ({ timecodes, onTimecodeClick, selectedLabel }) => {
 						<p style={{ textAlign: "left" }}>{timecode.label}</p>
 						<p>{secondsToTimeFormat(timecode.start)}</p>
 						<p>{secondsToTimeFormat(timecode.stop)}</p>
+						<DeleteButton
+							onClick={(e) => {
+								e.stopPropagation();
+								deleteTimecode(index);
+							}}
+						>
+							<FontAwesomeIcon icon={faTrash} />
+						</DeleteButton>
 					</Row>
 				))}
 			</TBody>
@@ -41,6 +72,19 @@ const Timecodes = ({ timecodes, onTimecodeClick, selectedLabel }) => {
 };
 
 export default Timecodes;
+
+const DeleteButton = styled.div`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: #a1a1a1;
+	font-size: 10px;
+
+	&:hover {
+		color: #ff8080;
+		cursor: pointer;
+	}
+`;
 
 const THead = styled.thead`
 	color: #a1a1a1;
@@ -73,13 +117,12 @@ const HeadElement = styled.div`
 
 const Row = styled.div`
 	display: grid;
-	grid-template-columns: 10% 50% 20% 20%;
+	grid-template-columns: 10% 45% 20% 20% 5%; // Add an extra column for the delete button
 	grid-template-rows: 1fr;
 	color: #e9e9e9;
 	font-weight: 400;
 	padding: 5px 0;
 	align-items: center;
-
 	p {
 		margin: 0;
 	}

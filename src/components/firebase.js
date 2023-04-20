@@ -6,17 +6,15 @@ import { getDatabase } from "firebase/database";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-	apiKey: "AIzaSyBrzBj4GWgtdTTeoztU4ujjSXO8qQqKSGg",
-	authDomain: "hci-final-deb49.firebaseapp.com",
-	projectId: "hci-final-deb49",
-	databaseUrl: "https://hci-final-deb49-default-rtdb.firebaseio.com",
-	storageBucket: "hci-final-deb49.appspot.com",
-	messagingSenderId: "9675116311",
-	appId: "1:9675116311:web:39e1d78f9ce44c53287152",
-	measurementId: "G-NJTC8VW04N",
+	apiKey: "AIzaSyAZxVL64pzCcR-exlxQkSRn1qqQb-zrB0U",
+	authDomain: "audioink-db881.firebaseapp.com",
+	projectId: "audioink-db881",
+	databaseUrl: "audioink-db881.appspot.com",
+	storageBucket: "audioink-db881.appspot.com",
+	messagingSenderId: "230041263323",
+	appId: "1:230041263323:web:3e8cf7ab561b53eaea40fe",
+	measurementId: "G-8BPW4KY9J4",
 };
 
 const app = initializeApp(firebaseConfig);

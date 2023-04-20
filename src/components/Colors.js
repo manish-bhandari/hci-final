@@ -2,7 +2,14 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
 const Colors = ({ setActiveColor, setActiveIndex, activeIndex }) => {
-	const colors = ["#DF5E5E", "#5EA1DF", "#5EDFC8", "#F2DE2B", "#875EDF"];
+	const colors = [
+		"#DF5E5E",
+		"#5EA1DF",
+		"#5EDFC8",
+		"#F2DE2B",
+		"#875EDF",
+		"#F0BDFD",
+	];
 
 	const handleClick = (index) => {
 		setActiveIndex(index);

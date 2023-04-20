@@ -1,10 +1,39 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
+
+import { app, rtdb } from "../components/firebase";
+import { getDatabase, ref, remove } from "firebase/database";
+import { getStorage, deleteObject, ref as storageRef } from "firebase/storage";
 
 function Mix({ data }) {
 	console.log("data", data);
 	const markers = data.markers ? data.markers : [];
+
+	const handleDelete = async (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		console.log("Delete mix", data.id);
+
+		// Delete mix data from Realtime Database
+		const db = getDatabase(app);
+		const mixRef = ref(db, `mixes/${data.userId}/${data.id}`);
+		await remove(mixRef);
+
+		// Delete mix audio file from Firebase Storage
+		const storage = getStorage(app);
+		const audioFileRef = storageRef(storage, data.data);
+		await deleteObject(audioFileRef);
+
+		// Delete mix image file from Firebase Storage if it exists
+		if (data.image) {
+			const imageFileRef = storageRef(storage, data.image);
+			await deleteObject(imageFileRef);
+		}
+	};
+
 	return (
 		<Link to={`/mix/${data.id}`} style={{ textDecoration: "none" }}>
 			<MixContainer>
@@ -22,14 +51,17 @@ function Mix({ data }) {
 						))}
 					</Markers>
 				</Content>
+				<DeleteButton onClick={handleDelete}>
+					<FontAwesomeIcon icon={faTrash} />
+				</DeleteButton>
 			</MixContainer>
 		</Link>
 	);
 }
-
 const MixContainer = styled.div`
 	display: flex;
 	flex-direction: row;
+	position: relative;
 	width: 100%;
 	background-color: #1a1e20;
 	color: white;
@@ -40,6 +72,7 @@ const MixContainer = styled.div`
 		border: 1px solid rgba(100, 215, 205, 0.8);
 	}
 `;
+
 const Content = styled.div`
 	display: flex;
 	flex-direction: column;
@@ -91,6 +124,21 @@ const ImageContainer = styled.div`
 		object-fit: cover;
 		border-top-left-radius: 7px;
 		border-bottom-left-radius: 7px;
+	}
+`;
+
+const DeleteButton = styled.button`
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	font-size: 16px;
+	background-color: transparent;
+	border: none;
+	color: #baaeae;
+	cursor: pointer;
+
+	&:hover {
+		color: red;
 	}
 `;
 

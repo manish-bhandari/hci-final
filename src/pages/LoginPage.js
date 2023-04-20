@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import { auth } from "../components/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+	signInWithEmailAndPassword,
+	createUserWithEmailAndPassword,
+} from "firebase/auth";
 import styled from "styled-components";
 
 function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
+	const [isRegistering, setIsRegistering] = useState(false);
 
 	const handleLogin = (e) => {
 		e.preventDefault();
@@ -21,11 +26,38 @@ function LoginPage() {
 			});
 	};
 
+	const handleRegister = (e) => {
+		e.preventDefault();
+		if (password !== confirmPassword) {
+			alert("Passwords do not match");
+			return;
+		}
+
+		createUserWithEmailAndPassword(auth, email, password)
+			.then((userCredential) => {
+				// Registered successfully
+				const user = userCredential.user;
+				console.log(user);
+			})
+			.catch((error) => {
+				// Handle errors here
+				console.error(error);
+			});
+	};
+
+	const handleSubmit = (e) => {
+		if (isRegistering) {
+			handleRegister(e);
+		} else {
+			handleLogin(e);
+		}
+	};
+
 	return (
 		<Container>
-			<Title>Login</Title>
+			<Title>{isRegistering ? "Register" : "Login"}</Title>
 			<Logo src="/assets/Logo.png" />
-			<form onSubmit={handleLogin}>
+			<form onSubmit={handleSubmit}>
 				<div>
 					<input
 						type="email"
@@ -42,7 +74,30 @@ function LoginPage() {
 						onChange={(e) => setPassword(e.target.value)}
 					/>
 				</div>
-				<button type="submit">Log in</button>
+				{isRegistering && (
+					<div>
+						<input
+							type="password"
+							value={confirmPassword}
+							placeholder="Confirm Password"
+							onChange={(e) => setConfirmPassword(e.target.value)}
+						/>
+					</div>
+				)}
+				<button type="submit">{isRegistering ? "Register" : "Log in"}</button>
+				<div>
+					<p>
+						{isRegistering
+							? "Already have an account?"
+							: "Don't have an account?"}
+					</p>
+					<button
+						type="button"
+						onClick={() => setIsRegistering(!isRegistering)}
+					>
+						{isRegistering ? "Log in" : "Register"}
+					</button>
+				</div>
 			</form>
 		</Container>
 	);
@@ -56,7 +111,6 @@ const Logo = styled.img`
 	padding: 30px;
 	transform: translateX(-50%);
 `;
-
 const Container = styled.div`
 	display: flex;
 	flex-direction: column;
@@ -85,10 +139,25 @@ const Container = styled.div`
 	button {
 		margin: 20px;
 		background-color: #758a8d;
+		color: black;
 		border: none;
 		color: white;
 		padding: 5px 10px;
 		width: 100px;
+		border-radius: 5px;
+		cursor: pointer;
+	}
+
+	p {
+		color: white;
+		margin: 5px;
+	}
+
+	div > button {
+		background-color: #378891;
+		border: none;
+		color: #ffff;
+		padding: 5px 10px;
 		border-radius: 5px;
 		cursor: pointer;
 	}

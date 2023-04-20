@@ -13,6 +13,7 @@ import {
 	getStorage,
 	uploadBytes,
 	ref as storageRef,
+	uploadBytesResumable,
 } from "firebase/storage";
 import { PulseLoader } from "react-spinners";
 
@@ -27,12 +28,16 @@ const customStyles = {
 		bottom: "auto",
 		width: "50vw",
 		transform: "translate(-50%, -50%)",
-		// padding: "30px",
-		// borderRadius: "5px",
+		padding: "30px",
+		borderRadius: "5px",
 		boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
 		backgroundColor: "#3b3c46",
 		border: "none",
 		color: "white",
+		display: "flex",
+		flexDirection: "column",
+		alignItems: "center",
+		gap: "10px",
 	},
 	overlay: {
 		backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -55,6 +60,9 @@ const Mixes = () => {
 	const [modalIsOpen, setModalIsOpen] = useState(false);
 
 	const [isLoading, setIsLoading] = useState(true);
+
+	const [uploadProgress, setUploadProgress] = useState(0);
+	const [uploading, setUploading] = useState(false);
 
 	useEffect(() => {
 		if (!user) return;
@@ -88,9 +96,11 @@ const Mixes = () => {
 	const closeModal = () => {
 		setModalIsOpen(false);
 	};
+
 	const uploadHandler = async () => {
 		if (!selectedAudioFile || !selectedImageFile) return;
 
+		setUploading(true);
 		const mixId = Date.now();
 		const storage = getStorage(app);
 
@@ -99,7 +109,13 @@ const Mixes = () => {
 			storage,
 			`mixes/${mixId}/${selectedAudioFile.name}`
 		);
-		await uploadBytes(musicRef, selectedAudioFile);
+		const uploadMusicTask = uploadBytesResumable(musicRef, selectedAudioFile);
+		uploadMusicTask.on("state_changed", (snapshot) => {
+			const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+			setUploadProgress(progress);
+		});
+
+		await uploadMusicTask;
 
 		let imageRef;
 		if (selectedImageFile !== null) {
@@ -133,6 +149,8 @@ const Mixes = () => {
 
 		const updatedMixes = [...mixes, newMix];
 		setMixes(updatedMixes);
+		setUploadProgress(0);
+		setUploading(false);
 		closeModal();
 	};
 
@@ -171,31 +189,87 @@ const Mixes = () => {
 				style={customStyles}
 				contentLabel="Upload Modal"
 			>
+				<h2>Upload New Mix</h2>
+				{uploading && (
+					<div>
+						<p>Uploading: {Math.round(uploadProgress)}%</p>
+						<progress value={uploadProgress} max="100" />
+					</div>
+				)}
 				<p>{selectedAudioFile && selectedAudioFile.name}</p>
 				<input
 					className="mix-name"
 					type="text"
 					placeholder="Name"
 					onChange={(e) => setNewMixName(e.target.value)}
+					style={{
+						width: "100%",
+						padding: "10px",
+						borderRadius: "5px",
+						border: "none",
+						backgroundColor: "#c5c9c8",
+						marginBottom: "10px",
+						outline: "none",
+						color: "#000",
+					}}
 				/>
 				<input
 					className="artist"
 					type="text"
 					placeholder="Artist"
 					onChange={(e) => setArtistName(e.target.value)}
+					style={{
+						width: "100%",
+						padding: "10px",
+						borderRadius: "5px",
+						border: "none",
+						backgroundColor: "#c5c9c8",
+						marginBottom: "10px",
+						outline: "none",
+						color: "#000",
+					}}
 				/>
 
+				<label htmlFor="imageUploader" style={{ marginBottom: "10px" }}>
+					Select Cover Image
+				</label>
 				<input
 					type="file"
 					accept="image/*"
 					id="imageUploader"
 					onChange={imageChangedHandler}
+					style={{ marginBottom: "20px" }}
 				/>
 
-				<br />
-				<br />
-				<button onClick={uploadHandler}>Upload</button>
-				<button onClick={closeModal}>Cancel</button>
+				<div>
+					<button
+						onClick={uploadHandler}
+						style={{
+							backgroundColor: "#758a8d",
+							border: "none",
+							color: "white",
+							padding: "10px",
+							borderRadius: "5px",
+							marginRight: "10px",
+							cursor: "pointer",
+						}}
+					>
+						Upload
+					</button>
+					<button
+						onClick={closeModal}
+						style={{
+							backgroundColor: "gray",
+							border: "none",
+							color: "white",
+							padding: "10px",
+							borderRadius: "5px",
+							cursor: "pointer",
+						}}
+					>
+						Cancel
+					</button>
+				</div>
 			</Modal>
 			<AddButton>
 				<input
@@ -203,7 +277,13 @@ const Mixes = () => {
 					accept=".mp3, .wav"
 					id="fileUploader"
 					onChange={fileChangedHandler}
-					style={{ display: "none" }}
+					style={{
+						position: "absolute",
+						opacity: 0,
+						width: "100%",
+						height: "100%",
+						cursor: "pointer",
+					}}
 				/>
 				<label htmlFor="fileUploader" className="upload-button">
 					+
@@ -215,8 +295,9 @@ const Mixes = () => {
 
 export default Mixes;
 
-const AddButton = styled.button`
+const AddButton = styled.div`
 	position: absolute;
+	cursor: pointer;
 	bottom: 0;
 	right: 0;
 	font-size: 50px;
@@ -227,7 +308,12 @@ const AddButton = styled.button`
 	border: none;
 	margin: 50px;
 	background-color: #758a8d;
-	cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	&:hover {
+		box-shadow: 0 0 5px 1px #a7ced3;
+	}
 `;
 
 const ProfileButton = styled.button`
@@ -283,7 +369,7 @@ const MainContent = styled.div`
 `;
 
 const Title = styled.div`
-	color: grey;
+	color: #e6e6e6;
 	background-color: #3b3c46;
 	padding: 5px 60px;
 	font-size: 25px;

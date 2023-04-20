@@ -4,11 +4,6 @@ import Waveform from "../components/Waveform";
 import Timecodes from "../components/Timecodes";
 import { useParams } from "react-router-dom";
 import { getDatabase, ref, get, update } from "firebase/database";
-import {
-	getStorage,
-	ref as storageRef,
-	getDownloadURL,
-} from "firebase/storage";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../components/firebase";
 import Colors from "../components/Colors";
@@ -262,6 +257,8 @@ const MixPage = ({ title, artist }) => {
 							timecodes={mixData.markers ? mixData.markers : []}
 							onTimecodeClick={onTimecodeClick}
 							selectedLabel={selectedLabel}
+							userId={user.uid}
+							mixId={id}
 						/>
 						<AddButton onClick={() => setMode("edit")}>+</AddButton>
 					</>
