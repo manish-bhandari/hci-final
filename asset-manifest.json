@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/hci-final/static/css/main.316562da.css",
+    "main.js": "/hci-final/static/js/main.de6590f2.js",
+    "index.html": "/hci-final/index.html",
+    "static/media/range-start.svg": "/hci-final/static/media/range-start.e9d5d59e90c5a89359b8128278b9c054.svg",
+    "static/media/range-stop.svg": "/hci-final/static/media/range-stop.c9b16ffd7883622598d7af4cb82e4fc6.svg",
+    "main.316562da.css.map": "/hci-final/static/css/main.316562da.css.map",
+    "main.de6590f2.js.map": "/hci-final/static/js/main.de6590f2.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.316562da.css",
+    "static/js/main.de6590f2.js"
+  ]
+}
